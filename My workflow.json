@@ -1,0 +1,267 @@
+{
+  "name": "My workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 5
+            },
+            {}
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        1104,
+        400
+      ],
+      "id": "e1c9d9e5-de1e-4827-b239-d45310024def",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "You are a weather-aware trail recommendation agent for New Delhi.\n\nYour goal:\nSelect the best walking trail for today based on current weather conditions\nand the trail dataset stored in Google Sheets.\n\nYou have access to the following tools:\n- OpenWeatherMap: provides current weather (temperature, humidity, rain, description)\n- Google Sheets (read): contains trails with columns:\n  Name, Distance (km), Elevation Gain (m), Estimated Time, Shade Level\n- Google Calendar: create an event for the selected trail\n- Gmail: send a daily recommendation email\n\nRules:\n1. First, fetch the current weather from OpenWeatherMap.\n2. Then, read all rows from the Google Sheet.\n3. Evaluate trails using these criteria:\n   - If temperature ≥ 35°C OR weather is sunny/clear → prefer \"Shady\" trails\n   - If temperature 30–35°C → allow \"Some Shade\", avoid \"Exposed\" trails\n   - If temperature < 30°C and no rain → any trail allowed\n   - If rain is detected → prefer shorter trails (≤ 5 km) and avoid exposed trails\n4. Prefer trails with:\n   - Lower elevation gain on hotter days\n   - Duration ≤ 2 hours on weekdays\n5. Select exactly ONE best trail.\n\nAfter selecting the trail:\n6. Create a Google Calendar event for today with:\n   - Title: \"Evening Walk – {Trail Name}\"\n   - Description: include distance, estimated time, shade level, and weather summary\n7. Send a Gmail message with:\n   - Subject: \"Today's Best Walking Trail Based on Weather\"\n   - Body:\n     - Current weather summary\n     - Selected trail name\n     - Reason why it was chosen\n     - Estimated time and shade level\n\nOutput:\n- Do NOT list multiple trails\n- Do NOT ask questions\n- Always take action using the tools\n- Be concise and practical\n",
+        "options": {
+          "systemMessage": "You are an automated daily assistant that helps manage tasks, weather, and communications.\n\nYour daily workflow:\n1. Read all rows from the Google Sheets document to get today's tasks and contacts\n2. Check the weather for any locations mentioned in the spreadsheet (use zip codes from the data)\n3. Create calendar events for any scheduled tasks or meetings listed in the spreadsheet\n4. Send email summaries to the specified recipients with:\n   - Weather information for their location\n   - Upcoming events/tasks for the day\n   - Any important reminders\n\nImportant guidelines:\n- Always read the spreadsheet first to understand what needs to be done\n- Format emails professionally with clear subject lines\n- Include weather details (temperature, conditions) when relevant\n- Create calendar events with appropriate start/end times based on the spreadsheet data\n- Be proactive - if the spreadsheet has tasks, complete them automatically\n\nReturn a summary of all actions taken."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3,
+      "position": [
+        1576,
+        400
+      ],
+      "id": "b33ae7ee-4212-4245-8b1a-306e8f49bd60",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "scheduled-workflow-session"
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        1456,
+        624
+      ],
+      "id": "9b9dfde2-8133-410c-a443-809acceadc0c",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        1328,
+        624
+      ],
+      "id": "b641afc2-084f-473d-a68b-1af25b817dc6",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "6k5Dg7VcHpnEdZB4",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "calendar": {
+          "__rl": true,
+          "value": "vedika.gupta224@gmail.com",
+          "mode": "list",
+          "cachedResultName": "vedika.gupta224@gmail.com"
+        },
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.googleCalendarTool",
+      "typeVersion": 1.3,
+      "position": [
+        1584,
+        624
+      ],
+      "id": "976be4d4-641b-4a0e-b34b-5dadfa7a8a40",
+      "name": "Create an event in Google Calendar",
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "boruTjrrgz7Jw17U",
+          "name": "Google Calendar account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "format": "imperial",
+        "cityName": "New Delhi,IN"
+      },
+      "type": "n8n-nodes-base.openWeatherMapTool",
+      "typeVersion": 1,
+      "position": [
+        1712,
+        624
+      ],
+      "id": "e7d70073-8bb2-4c9a-b7da-b22e2b1de4c3",
+      "name": "OpenWeatherMap",
+      "credentials": {
+        "openWeatherMapApi": {
+          "id": "jT1USPN6pw9SY3z2",
+          "name": "OpenWeatherMap account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1B-WN_FdyiVq5epjJ9mNJgDoquv6Xax1hjXZG-zxyb0o",
+          "mode": "list",
+          "cachedResultName": "trail",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1B-WN_FdyiVq5epjJ9mNJgDoquv6Xax1hjXZG-zxyb0o/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1B-WN_FdyiVq5epjJ9mNJgDoquv6Xax1hjXZG-zxyb0o/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.7,
+      "position": [
+        1840,
+        624
+      ],
+      "id": "68adcc8a-9f6d-4029-8cd4-b49f4da3b23a",
+      "name": "Get row(s) in sheet in Google Sheets",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "3o0I9eyHkWC0IWBo",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "vedika.gupta224@gmail.com",
+        "subject": "={{ $fromAI('subject', 'Email subject line', 'string') }}",
+        "message": "={{ $fromAI('message', 'Email body content', 'string') }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmailTool",
+      "typeVersion": 2.2,
+      "position": [
+        1968,
+        624
+      ],
+      "id": "ed085f84-9c5a-44c2-88de-474d46986b8f",
+      "name": "Send a message in Gmail",
+      "webhookId": "d9a2d4b5-8ec4-4148-bc32-7280c5d8f8c9",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "FBqIGOru5gDhM8SX",
+          "name": "Gmail account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create an event in Google Calendar": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenWeatherMap": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s) in sheet in Google Sheets": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message in Gmail": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "b0b2b7a4-a055-43e3-9b66-250a8ccd4b91",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "76fb236f2d470cafd99a67b2eb697dee035f4b2ea31b52d670583e3bc4da0b51"
+  },
+  "id": "5IJS5imS3NcdyAfr",
+  "tags": []
+}
